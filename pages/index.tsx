@@ -29,6 +29,61 @@ const ServerCall = () => {
   }
 }
 
+interface Monster {
+  name: string;
+  location: string;
+  hobbies: string;
+}
+
+const ServerDataTable = () => {
+  const [isLoading, setLoading] = useState(true)
+  const [monsterData, setMonsterData] = useState<Monster[]>([])
+  const [error, setError] = useState(null)
+  useEffect(() => {
+    fetch("http://localhost:5000/monsterData")
+    .then(res => res.json())
+    .then((res) => {
+      console.log(res)
+      setLoading(false)
+      setMonsterData(res.monsterData)
+    },
+    (err) => {
+      setLoading(false)
+      setError(err.message)
+    })
+  }, [])
+
+  if (isLoading) {
+    return (
+      <p>Loading...</p>
+    )
+  } else if (error) {
+    return (
+      <p>{error}</p>
+    )
+  } else {
+    return (
+      <div>
+      <h3>Monsters at the Mash</h3>
+      <table>
+        <tr>
+          <th>name</th>
+          <th>location</th>
+          <th>hobbies</th>
+        </tr>
+        {monsterData.map( monster => (
+          <tr>
+            <td>{monster.name}</td>
+            <td>{monster.location}</td>
+            <td>{monster.hobbies}</td>
+          </tr>
+        ))}
+      </table>
+      </div>
+    )
+  }
+}
+
 const IndexPage = () => (
   <Layout title="Home | Next.js + TypeScript Example">
     <h1>Full-Stack React 👋</h1>
@@ -48,7 +103,8 @@ const IndexPage = () => (
     </ol>
     <p>Let's try connecting to the server:</p>
     <ServerCall />
-
+      <p>Great! Our basic API call went through. Now, let's try to import data for a table:</p>
+      <ServerDataTable />
   </Layout>
 )
 
