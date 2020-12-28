@@ -1,4 +1,33 @@
 import Layout from '../components/Layout'
+import { useState, useEffect } from "react"
+
+const ServerCall = () => {
+  const [isLoading, setLoading] = useState(true)
+  const [message, setMessage] = useState("")
+  useEffect(() => {
+    fetch("http://localhost:5000/hellonode")
+    .then(res => res.json())
+    .then((res) => {
+      console.log(res)
+      setLoading(false)
+      setMessage(res.text)
+    },
+    (err) => {
+      setLoading(false)
+      setMessage(`${err}`)
+    })
+  }, [])
+
+  if (isLoading) {
+    return (
+      <p>Loading...</p>
+    )
+  } else {
+    return (
+      <p>{message}</p>
+    )
+  }
+}
 
 const IndexPage = () => (
   <Layout title="Home | Next.js + TypeScript Example">
@@ -17,6 +46,8 @@ const IndexPage = () => (
         "Manage Cookies/ session ID"
       ].map((task, i) => (<li key={`task-${i}`}>{task}</li>))}
     </ol>
+    <p>Let's try connecting to the server:</p>
+    <ServerCall />
 
   </Layout>
 )
