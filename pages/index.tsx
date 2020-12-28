@@ -1,5 +1,5 @@
 import Layout from '../components/Layout'
-import { useState, useEffect } from "react"
+import { useState, useEffect, Dispatch, SetStateAction } from "react"
 
 const ServerCall = () => {
   const [isLoading, setLoading] = useState(true)
@@ -35,10 +35,40 @@ interface Monster {
   hobbies: string;
 }
 
+const MonsterForm = (props: {setMonsterData: Dispatch<SetStateAction<Monster[]>>}) => {
+  const [name, setName] = useState("")
+  const [location, setLocation] = useState("")
+  const [hobbies, setHobbies] = useState("")
+
+  const submitMonster = () => {
+    fetch(`http://localhost:5000/add?name=${name}&location=${location}&hobbies=${hobbies}`)
+    .then(res => res.json())
+    .then((res) => {
+      console.log(res)
+      props.setMonsterData(res.monsterData)
+    }, (err) => {
+      console.log(err.message)
+    })
+  }
+
+  return (
+    <form>
+      <label>Name:</label>
+      <input onChange={(event) => setName(event.target.value)}></input>
+      <label>Location:</label>
+      <input onChange={(event) => setLocation(event.target.value)}></input>
+      <label>Hobbies:</label>
+      <input onChange={(event) => setHobbies(event.target.value)}></input>
+      <button onClick={() => submitMonster()}>add</button>
+    </form>
+  )
+}
+
 const ServerDataTable = () => {
   const [isLoading, setLoading] = useState(true)
   const [monsterData, setMonsterData] = useState<Monster[]>([])
   const [error, setError] = useState(null)
+
   useEffect(() => {
     fetch("http://localhost:5000/monsterData")
     .then(res => res.json())
@@ -53,6 +83,16 @@ const ServerDataTable = () => {
     })
   }, [])
 
+  const removeMonster = (monsterName: string) => {
+    fetch("http://localhost:5000/remove/" + monsterName)
+    .then(res => res.json())
+    .then((res) => {
+      setMonsterData(res.monsterData)
+    }, (err) => {
+      console.log(err.message)
+    })
+  }
+
   if (isLoading) {
     return (
       <p>Loading...</p>
@@ -66,19 +106,27 @@ const ServerDataTable = () => {
       <div>
       <h3>Monsters at the Mash</h3>
       <table>
+        <thead>
         <tr>
           <th>name</th>
           <th>location</th>
           <th>hobbies</th>
         </tr>
-        {monsterData.map( monster => (
-          <tr>
+        </thead>
+        <tbody>
+        {monsterData.map( (monster, i) => (
+          <tr key={`${monster.name}-${i}`}>
             <td>{monster.name}</td>
             <td>{monster.location}</td>
             <td>{monster.hobbies}</td>
+            <td>
+              <button onClick={() => removeMonster(monster.name)}>Delete</button>
+            </td>
           </tr>
         ))}
+        </tbody>
       </table>
+      <MonsterForm setMonsterData={setMonsterData} />
       </div>
     )
   }
