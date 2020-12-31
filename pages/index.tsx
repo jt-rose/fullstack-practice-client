@@ -8,7 +8,6 @@ const ServerCall = () => {
     fetch("http://localhost:5000/hellonode")
     .then(res => res.json())
     .then((res) => {
-      console.log(res)
       setLoading(false)
       setMessage(res.text)
     },
@@ -46,7 +45,6 @@ const MonsterForm = (props: {setMonsterData: Dispatch<SetStateAction<Monster[]>>
     fetch(`http://localhost:5000/add?name=${name}&location=${location}&hobbies=${hobbies}`)
     .then(res => res.json())
     .then((res) => {
-      console.log(res)
       setName("")
       setLocation("")
       setHobbies("")
@@ -82,7 +80,6 @@ const TableRow = (props: {monster: Monster, setMonsterData: Dispatch<SetStateAct
     .then(res => res.json())
     .then(res => {
       setEditing(false)
-      console.log(res)
       setMonsterData(res)
     },
     (err) => console.error(err))
@@ -160,7 +157,6 @@ const ServerDataTable = () => {
     fetch("http://localhost:5000/monsterData")
     .then(res => res.json())
     .then((res) => {
-      console.log(res)
       setLoading(false)
       setMonsterData(res)
     },
