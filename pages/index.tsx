@@ -1,5 +1,5 @@
 import Layout from '../components/Layout'
-import { useState, useEffect, Dispatch, SetStateAction } from "react"
+import { useState, useEffect, Dispatch, SetStateAction, FormEvent } from "react"
 
 const ServerCall = () => {
   const [isLoading, setLoading] = useState(true)
@@ -30,6 +30,7 @@ const ServerCall = () => {
 }
 
 interface Monster {
+  _id: string;
   name: string;
   location: string;
   hobbies: string;
@@ -40,29 +41,115 @@ const MonsterForm = (props: {setMonsterData: Dispatch<SetStateAction<Monster[]>>
   const [location, setLocation] = useState("")
   const [hobbies, setHobbies] = useState("")
 
-  const submitMonster = () => {
+  const submitMonster = (event: FormEvent) => {
+    event.preventDefault()
     fetch(`http://localhost:5000/add?name=${name}&location=${location}&hobbies=${hobbies}`)
     .then(res => res.json())
     .then((res) => {
       console.log(res)
-      props.setMonsterData(res.monsterData)
+      setName("")
+      setLocation("")
+      setHobbies("")
+      props.setMonsterData(res)
     }, (err) => {
       console.log(err.message)
     })
   }
 
   return (
-    <form>
+    <form onSubmit={submitMonster}>
       <label>Name:</label>
-      <input onChange={(event) => setName(event.target.value)}></input>
+      <input  value={name} onChange={(event) => setName(event.target.value)}></input>
       <label>Location:</label>
-      <input onChange={(event) => setLocation(event.target.value)}></input>
+      <input value={location} onChange={(event) => setLocation(event.target.value)}></input>
       <label>Hobbies:</label>
-      <input onChange={(event) => setHobbies(event.target.value)}></input>
-      <button onClick={() => submitMonster()}>add</button>
+      <input value={hobbies} onChange={(event) => setHobbies(event.target.value)}></input>
+      <input type="submit" value="Add" disabled={[name, location, hobbies].some(input => input === "")}/>
     </form>
   )
 }
+
+const TableRow = (props: {monster: Monster, setMonsterData: Dispatch<SetStateAction<Monster[]>>}) => {
+  const { monster, setMonsterData } = props
+  const [isEditing, setEditing] = useState(false)
+  const [editableName, setEditableName] = useState(monster.name)
+  const [editableLocation, setEditableLocation] = useState(monster.location)
+  const [editableHobbies, setEditableHobbies] = useState(monster.hobbies)
+
+  const editMonster = () => {
+    const queryParams = `name=${editableName}&location=${editableLocation}&hobbies=${editableHobbies}`
+    fetch(`http://localhost:5000/edit?monsterID=${monster._id}&${queryParams}`)
+    .then(res => res.json())
+    .then(res => {
+      setEditing(false)
+      console.log(res)
+      setMonsterData(res)
+    },
+    (err) => console.error(err))
+  }
+
+  const cancelEdit = () => {
+    setEditing(false)
+    setEditableName(monster.name)
+    setEditableLocation(monster.location)
+    setEditableHobbies(monster.hobbies)
+  }
+
+  const removeMonster = () => {
+    fetch("http://localhost:5000/remove/" + monster._id)
+    .then(res => res.json())
+    .then((res) => {
+      setMonsterData(res)
+    }, (err) => {
+      console.log(err.message)
+    })
+  }
+
+    if (isEditing) {
+      return (
+        <tr>
+        <td>
+          <input  value={editableName} onChange={(event) => setEditableName(event.target.value)}></input>
+        </td>
+        <td>
+          <input value={editableLocation} onChange={(event) => setEditableLocation(event.target.value)}></input>
+        </td>
+        <td>
+          <input value={editableHobbies} onChange={(event) => setEditableHobbies(event.target.value)}></input>
+        </td>
+      
+        <td>
+          <button 
+            onClick={editMonster}
+            disabled={
+              [
+                editableName, 
+                editableLocation, 
+                editableHobbies]
+                .some(field => field === "")
+                }>Update</button>
+        </td>
+        <td>
+          <button onClick={cancelEdit}>Cancel</button>
+        </td>
+      </tr>
+      )
+    } else {
+      return (
+        <tr>
+            <td>{monster.name}</td>
+            <td>{monster.location}</td>
+            <td>{monster.hobbies}</td>
+            <td>
+              <button onClick={() => setEditing(true)}>Edit</button>
+            </td>
+            <td>
+              <button onClick={removeMonster}>Delete</button>
+            </td>
+          </tr>
+      )
+    }
+  }
 
 const ServerDataTable = () => {
   const [isLoading, setLoading] = useState(true)
@@ -75,23 +162,13 @@ const ServerDataTable = () => {
     .then((res) => {
       console.log(res)
       setLoading(false)
-      setMonsterData(res.monsterData)
+      setMonsterData(res)
     },
     (err) => {
       setLoading(false)
       setError(err.message)
     })
   }, [])
-
-  const removeMonster = (monsterName: string) => {
-    fetch("http://localhost:5000/remove/" + monsterName)
-    .then(res => res.json())
-    .then((res) => {
-      setMonsterData(res.monsterData)
-    }, (err) => {
-      console.log(err.message)
-    })
-  }
 
   if (isLoading) {
     return (
@@ -115,14 +192,11 @@ const ServerDataTable = () => {
         </thead>
         <tbody>
         {monsterData.map( (monster, i) => (
-          <tr key={`${monster.name}-${i}`}>
-            <td>{monster.name}</td>
-            <td>{monster.location}</td>
-            <td>{monster.hobbies}</td>
-            <td>
-              <button onClick={() => removeMonster(monster.name)}>Delete</button>
-            </td>
-          </tr>
+          <TableRow 
+            monster={monster} 
+            setMonsterData={setMonsterData}
+            key={`${monster}-${i}`}  
+          />
         ))}
         </tbody>
       </table>
