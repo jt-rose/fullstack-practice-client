@@ -35,14 +35,14 @@ interface Monster {
   hobbies: string;
 }
 
-const MonsterForm = (props: {setMonsterData: Dispatch<SetStateAction<Monster[]>>}) => {
+const MonsterForm = (props: {dbType: ("mongo" | "postgres"), setMonsterData: Dispatch<SetStateAction<Monster[]>>}) => {
   const [name, setName] = useState("")
   const [location, setLocation] = useState("")
   const [hobbies, setHobbies] = useState("")
 
   const submitMonster = (event: FormEvent) => {
     event.preventDefault()
-    fetch(`http://localhost:5000/add?name=${name}&location=${location}&hobbies=${hobbies}`)
+    fetch(`http://localhost:5000/${props.dbType}/add?name=${name}&location=${location}&hobbies=${hobbies}`)
     .then(res => res.json())
     .then((res) => {
       setName("")
@@ -67,8 +67,8 @@ const MonsterForm = (props: {setMonsterData: Dispatch<SetStateAction<Monster[]>>
   )
 }
 
-const TableRow = (props: {monster: Monster, setMonsterData: Dispatch<SetStateAction<Monster[]>>}) => {
-  const { monster, setMonsterData } = props
+const TableRow = (props: {dbType: ("mongo" | "postgres"), monster: Monster, setMonsterData: Dispatch<SetStateAction<Monster[]>>}) => {
+  const { dbType, monster, setMonsterData } = props
   const [isEditing, setEditing] = useState(false)
   const [editableName, setEditableName] = useState(monster.name)
   const [editableLocation, setEditableLocation] = useState(monster.location)
@@ -76,7 +76,7 @@ const TableRow = (props: {monster: Monster, setMonsterData: Dispatch<SetStateAct
 
   const editMonster = () => {
     const queryParams = `name=${editableName}&location=${editableLocation}&hobbies=${editableHobbies}`
-    fetch(`http://localhost:5000/edit?monsterID=${monster._id}&${queryParams}`)
+    fetch(`http://localhost:5000/${dbType}/edit?monsterID=${monster._id}&${queryParams}`)
     .then(res => res.json())
     .then(res => {
       setEditing(false)
@@ -93,7 +93,7 @@ const TableRow = (props: {monster: Monster, setMonsterData: Dispatch<SetStateAct
   }
 
   const removeMonster = () => {
-    fetch("http://localhost:5000/remove/" + monster._id)
+    fetch(`http://localhost:5000/${dbType}/remove/${monster._id}`)
     .then(res => res.json())
     .then((res) => {
       setMonsterData(res)
@@ -148,13 +148,13 @@ const TableRow = (props: {monster: Monster, setMonsterData: Dispatch<SetStateAct
     }
   }
 
-const ServerDataTable = () => {
+const ServerDataTable = (props: {dbType: ("mongo" | "postgres")}) => {
   const [isLoading, setLoading] = useState(true)
   const [monsterData, setMonsterData] = useState<Monster[]>([])
   const [error, setError] = useState(null)
 
   useEffect(() => {
-    fetch("http://localhost:5000/monsterData")
+    fetch(`http://localhost:5000/${props.dbType}/monsterData`)
     .then(res => res.json())
     .then((res) => {
       setLoading(false)
@@ -189,6 +189,7 @@ const ServerDataTable = () => {
         <tbody>
         {monsterData.map( (monster, i) => (
           <TableRow 
+            dbType={props.dbType}
             monster={monster} 
             setMonsterData={setMonsterData}
             key={`${monster}-${i}`}  
@@ -196,7 +197,7 @@ const ServerDataTable = () => {
         ))}
         </tbody>
       </table>
-      <MonsterForm setMonsterData={setMonsterData} />
+      <MonsterForm dbType={props.dbType} setMonsterData={setMonsterData} />
       </div>
     )
   }
@@ -222,7 +223,22 @@ const IndexPage = () => (
     <p>Let's try connecting to the server:</p>
     <ServerCall />
       <p>Great! Our basic API call went through. Now, let's try to import data for a table:</p>
-      <ServerDataTable />
+      <ServerDataTable dbType="mongo"/>
+      <br />
+      <p>Success! The basic MERN stack is up and running.</p>
+      <p>After testing out mongoose a bit, I decided to forego using it. 
+        TypeScript/ validator functions easily handle modeling object shape already
+        and the other benefits didn't seem worth it.
+      </p>
+      <br />
+      <p>Now, onto testing out Postgres!</p>
+      <p>First, let's just make a basic connection and grab our monsters:</p>
+      <ServerDataTable dbType="postgres" />
+      <p>Postgres is up and running! It is interesting to compare the two, with Mongo being easier to set up
+        and more 'node-like', but Postgres seeming more capable and perhaps a little faster. I opted to use postgres-node
+        rather than sequalize because I still want to get practice wriing standard SQL queries. In the future,
+        I might look into using sequalize as it seems it would speed things up and help avoid some dumb errors like typos.
+      </p>
   </Layout>
 )
 
