@@ -1,6 +1,8 @@
 import Layout from '../components/Layout'
 import { useState, useEffect, Dispatch, SetStateAction, FormEvent } from "react"
 
+const JSONHeader = { "Content-Type": "application/json"}
+
 const ServerCall = () => {
   const [isLoading, setLoading] = useState(true)
   const [message, setMessage] = useState("")
@@ -42,7 +44,13 @@ const MonsterForm = (props: {dbType: ("mongo" | "postgres"), setMonsterData: Dis
 
   const submitMonster = (event: FormEvent) => {
     event.preventDefault()
-    fetch(`http://localhost:5000/${props.dbType}/add?name=${name}&location=${location}&hobbies=${hobbies}`)
+    const body = JSON.stringify({ name, location, hobbies })
+    fetch(`http://localhost:5000/${props.dbType}/api/add`,
+    {
+      method: "post",
+      body,
+      headers: JSONHeader
+    })
     .then(res => res.json())
     .then((res) => {
       setName("")
@@ -75,8 +83,19 @@ const TableRow = (props: {dbType: ("mongo" | "postgres"), monster: Monster, setM
   const [editableHobbies, setEditableHobbies] = useState(monster.hobbies)
 
   const editMonster = () => {
-    const queryParams = `name=${editableName}&location=${editableLocation}&hobbies=${editableHobbies}`
-    fetch(`http://localhost:5000/${dbType}/edit?monsterID=${monster._id}&${queryParams}`)
+    const body = JSON.stringify({
+      monsterID: monster._id,
+      name: editableName,
+      location: editableLocation,
+      hobbies: editableHobbies
+    })
+
+    fetch(`http://localhost:5000/${dbType}/api/edit`,
+    {
+      method: "put",
+      body,
+      headers: JSONHeader
+    })
     .then(res => res.json())
     .then(res => {
       setEditing(false)
@@ -93,7 +112,14 @@ const TableRow = (props: {dbType: ("mongo" | "postgres"), monster: Monster, setM
   }
 
   const removeMonster = () => {
-    fetch(`http://localhost:5000/${dbType}/remove/${monster._id}`)
+    const body = JSON.stringify({
+      monsterID: monster._id
+    })
+    fetch(`http://localhost:5000/${dbType}/api/remove`, {
+      method: "delete",
+      body,
+      headers: JSONHeader
+    } )
     .then(res => res.json())
     .then((res) => {
       setMonsterData(res)
@@ -154,7 +180,7 @@ const ServerDataTable = (props: {dbType: ("mongo" | "postgres")}) => {
   const [error, setError] = useState(null)
 
   useEffect(() => {
-    fetch(`http://localhost:5000/${props.dbType}/monsterData`)
+    fetch(`http://localhost:5000/${props.dbType}/api/monsterData`)
     .then(res => res.json())
     .then((res) => {
       setLoading(false)
@@ -215,9 +241,10 @@ const IndexPage = () => (
         "Set up server with Mock DB / API response to client",
         "Add CRUD calls to server from client",
         "Refactor Mock DB to use Mongo/ Mongoose",
+        "Rebuild DB using Postgres",
         "Integrate GraphQL/ Apollo",
+        "Manage Cookies/ session ID",
         "Set up user login/ auth",
-        "Manage Cookies/ session ID"
       ].map((task, i) => (<li key={`task-${i}`}>{task}</li>))}
     </ol>
     <p>Let's try connecting to the server:</p>
