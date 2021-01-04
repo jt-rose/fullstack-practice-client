@@ -1,8 +1,15 @@
 import Layout from '../components/Layout'
 import { useState, useEffect, Dispatch, SetStateAction, FormEvent } from "react"
 
+/* 
+  Testing out connecting a React frontend to a Node backend 
+  The same DB will be implemented in both Mongo and Postgres 
+*/
+
+// headers setting for JSON fetch requests
 const JSONHeader = { "Content-Type": "application/json"}
 
+// quick test of the node connection
 const ServerCall = () => {
   const [isLoading, setLoading] = useState(true)
   const [message, setMessage] = useState("")
@@ -30,6 +37,7 @@ const ServerCall = () => {
   }
 }
 
+// Our DB will be comprised of monsters going to a mash
 interface Monster {
   _id: string;
   name: string;
@@ -37,6 +45,7 @@ interface Monster {
   hobbies: string;
 }
 
+// Invite a new monster to the mash
 const MonsterForm = (props: {dbType: ("mongo" | "postgres"), setMonsterData: Dispatch<SetStateAction<Monster[]>>}) => {
   const [name, setName] = useState("")
   const [location, setLocation] = useState("")
@@ -75,6 +84,7 @@ const MonsterForm = (props: {dbType: ("mongo" | "postgres"), setMonsterData: Dis
   )
 }
 
+// Set up table row to switch to inputs for editing entries
 const TableRow = (props: {dbType: ("mongo" | "postgres"), monster: Monster, setMonsterData: Dispatch<SetStateAction<Monster[]>>}) => {
   const { dbType, monster, setMonsterData } = props
   const [isEditing, setEditing] = useState(false)
@@ -174,6 +184,7 @@ const TableRow = (props: {dbType: ("mongo" | "postgres"), monster: Monster, setM
     }
   }
 
+// Table showing all the monsters at the mash
 const ServerDataTable = (props: {dbType: ("mongo" | "postgres")}) => {
   const [isLoading, setLoading] = useState(true)
   const [monsterData, setMonsterData] = useState<Monster[]>([])
@@ -229,6 +240,8 @@ const ServerDataTable = (props: {dbType: ("mongo" | "postgres")}) => {
   }
 }
 
+
+// Page layout with both Mongo and Postgres DBs
 const IndexPage = () => (
   <Layout title="Home | Next.js + TypeScript Example">
     <h1>Full-Stack React 👋</h1>
